@@ -23,7 +23,7 @@ module.exports = {
 				scope.error("Invalid brightness setting. Only 0 - 100 percent allowed");
 				return false;
 			}
-			else if(data.brightness == 0)
+			else if(data.brightness == 0 && light.on !== undefined)
 			{
 				light.on = false;
 			}
