@@ -9,6 +9,7 @@ module.exports = function(RED)
 		var scope = this;
 		let bridge = RED.nodes.getNode(config.bridge);
 		let moment = require('moment');
+		let lightHelper = require('../utils/light-helper.js');
 		let rgb = require('../utils/rgb');
 		let rgbHex = require('rgb-hex');
 		let hexRGB = require('hex-rgb');
@@ -220,95 +221,10 @@ module.exports = function(RED)
 			{
 				bridge.client.lights.getById(tempLightID)
 				.then(light => {
-					// SET LIGHT STATE
-					if(typeof msg.payload.on != 'undefined')
-					{
-						light.on = msg.payload.on;
-					}
 
-					// SET BRIGHTNESS
-					if(typeof msg.payload.brightness != 'undefined')
-					{
-						if(msg.payload.brightness > 100 || msg.payload.brightness < 0)
-						{
-							scope.error("Invalid brightness setting. Only 0 - 100 percent allowed");
-							return false;
-						}
-						else if(msg.payload.brightness == 0)
-						{
-							light.on = false;
-						}
-						else
-						{
-							light.on = true;
-							light.brightness = Math.round((254/100)*parseInt(msg.payload.brightness));
-						}
-					}
-					else if(typeof msg.payload.incrementBrightness != 'undefined')
-					{
-						if (msg.payload.incrementBrightness > 0)
-						{
-							light.on = true;
-						}
-						light.incrementBrightness = Math.round((254/100)*parseInt(msg.payload.incrementBrightness));
-					}
-
-					// SET HUMAN READABLE COLOR
-					if(msg.payload.color && light.xy)
-					{
-						var colorHex = colornames(msg.payload.color);
-						if(colorHex)
-						{
-							light.xy = rgb.convertRGBtoXY(hexRGB(colorHex), light.model.id);
-						}
-					}
-
-					// SET RGB COLOR
-					if(msg.payload.rgb && light.xy)
-					{
-						light.xy = rgb.convertRGBtoXY(msg.payload.rgb, light.model.id);
-					}
-
-					// SET HEX COLOR
-					if(msg.payload.hex && light.xy)
-					{
-						var rgbResult = hexRGB((msg.payload.hex).toString());
-						light.xy = rgb.convertRGBtoXY([rgbResult.red, rgbResult.green, rgbResult.blue], light.model.id);
-					}
-
-					// SET COLOR TEMPERATURE
-					if(msg.payload.colorTemp && light.colorTemp)
-					{
-						let colorTemp = parseInt(msg.payload.colorTemp);
-						if(colorTemp >= 153 && colorTemp <= 500)
-						{
-							light.colorTemp = parseInt(msg.payload.colorTemp);
-						}
-						else
-						{
-							scope.error("Invalid color temprature. Only 153 - 500 allowed");
-							return false;
-						}
-					}
-
-					// SET SATURATION
-					if(msg.payload.saturation && light.saturation)
-					{
-						if(msg.payload.saturation > 100 || msg.payload.saturation < 0)
-						{
-							scope.error("Invalid saturation setting. Only 0 - 254 allowed");
-							return false;
-						}
-						else
-						{
-							light.saturation = Math.round((254/100)*parseInt(msg.payload.saturation));
-						}
-					}
-
-					// SET TRANSITION TIME
-					if(msg.payload.transitionTime)
-					{
-						light.transitionTime = parseInt(msg.payload.transitionTime);
+					light = lightHelper.parseLight(msg.payload, light, scope);
+					if (light === false) {
+						return false;
 					}
 
 					// SET COLORLOOP EFFECT
