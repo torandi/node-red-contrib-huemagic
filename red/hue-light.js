@@ -210,7 +210,7 @@ module.exports = function(RED)
 			var scope = this;
 			if(light.on)
 			{
-				brightnessPercent = Math.round((100/254)*light.brightness);
+				var brightnessPercent = Math.round((100/254)*light.brightness);
 				scope.status({fill: "yellow", shape: "dot", text: "turned on ("+ brightnessPercent +"%)"});
 			}
 			else
