@@ -160,24 +160,32 @@ module.exports = function(RED)
 				bridge.client.lights.getById(tempLightID)
 				.then(light => {
 
-					light = lightHelper.parseLight(msg.payload, light, scope);
-					if (light === false) {
-						return false;
-					}
-
-					// SET COLORLOOP EFFECT
-					if(msg.payload.colorloop && msg.payload.colorloop > 0 && light.xy)
+					if (msg.payload !== undefined)
 					{
-						light.effect = 'colorloop';
+						light = lightHelper.parseLight(msg.payload, light, scope);
+						if (light === false)
+						{
+							return false;
+						}
 
-						// DISABLE AFTER
-						setTimeout(function() {
-							light.effect = 'none';
-							bridge.client.lights.save(light);
-						}, parseInt(msg.payload.colorloop)*1000);
+						// SET COLORLOOP EFFECT
+						if (msg.payload.colorloop && msg.payload.colorloop > 0 && light.xy)
+						{
+							light.effect = 'colorloop';
+
+							// DISABLE AFTER
+							setTimeout(function () {
+								light.effect = 'none';
+								bridge.client.lights.save(light);
+							}, parseInt(msg.payload.colorloop) * 1000);
+						}
+
+						return bridge.client.lights.save(light);
 					}
-
-					return bridge.client.lights.save(light);
+					else
+					{
+						return light;
+					}
 				})
 				.then(light => {
 					if(light != false)
