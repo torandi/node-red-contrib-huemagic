@@ -223,6 +223,7 @@ module.exports = function(RED)
 			message.payload = {};
 			message.payload.on = light.on;
 			message.payload.brightness = light.brightness;
+			message.payload.colorMode = light.colorMode;
 
 			message.info = {};
 			message.info.id = light.id;
@@ -239,7 +240,7 @@ module.exports = function(RED)
 			message.info.model.colorGamut = light.model.colorGamut;
 			message.info.model.friendsOfHue = light.model.friendsOfHue;
 
-			if(light.xy)
+			if (light.colorMode == "xy")
 			{
 				var rgbColor = rgb.convertXYtoRGB(light.xy[0], light.xy[1], light.brightness);
 
@@ -247,24 +248,22 @@ module.exports = function(RED)
 				message.payload.rgb = rgbColor;
 				message.payload.hex = rgbHex(rgbColor[0], rgbColor[1], rgbColor[2]);
 
-				if(config.colornamer == true)
+				if (config.colornamer == true)
 				{
 					var cNamesArray = colornamer(rgbHex(rgbColor[0], rgbColor[1], rgbColor[2]));
 					message.payload.color = cNamesArray.basic[0]["name"];
 				}
 			}
-
-			if (light.colorTemp)
+			else if (light.colorMode == "ct")
+			{
 				message.payload.colorTemp = light.colorTemp;
-
-			if (light.saturation)
+			}
+			else if (light.colorMode == "hs")
+			{
 				message.payload.saturation = light.saturation;
-
-			if (light.hue)
 				message.payload.hue = light.hue;
+			}
 
-			if (light.colorMode)
-				message.payload.colorMode = light.colorMode;
 
 			message.payload.updated = moment().format();
 
