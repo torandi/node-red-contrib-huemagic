@@ -109,7 +109,7 @@ module.exports = {
 				}
 			}
 		}
-		else if (colorMode == "ct")
+		else if (light.colorMode == "ct")
 		{
 			if (data.colorTemp)
 			{
