@@ -33,70 +33,7 @@ module.exports = function(RED)
 		// ON UPDATE
 		if(config.lightid)
 		{
-			bridge.events.on('light' + config.lightid, function(light)
-			{
-				var brightnessPercent = 0;
-				if(light.reachable){
-					if(light.on)
-					{
-						brightnessPercent = Math.round((100/254)*light.brightness);
-						scope.status({fill: "yellow", shape: "dot", text: "turned on ("+ brightnessPercent +"%)"});
-					}
-					else
-					{
-						scope.status({fill: "grey", shape: "dot", text: "turned off"});
-					}
-				}
-				else
-				{
-					scope.status({fill: "red", shape: "ring", text: "not reachable"});
-				}
-
-				// DETERMINE TYPE AND SEND STATUS
-				var message = {};
-				message.payload = {};
-				message.payload.on = light.on;
-				message.payload.brightness = brightnessPercent;
-				message.payload.reachable = light.reachable;
-				message.payload.colorMode = light.colorMode;
-
-				message.info = {};
-				message.info.id = light.id;
-				message.info.uniqueId = light.uniqueId;
-				message.info.name = light.name;
-				message.info.type = light.type;
-				message.info.softwareVersion = light.softwareVersion;
-
-				message.info.model = {};;
-				message.info.model.id = light.model.id;
-				message.info.model.manufacturer = light.model.manufacturer;
-				message.info.model.name = light.model.name;
-				message.info.model.type = light.model.type;
-				message.info.model.colorGamut = light.model.colorGamut;
-				message.info.model.friendsOfHue = light.model.friendsOfHue;
-
-				if(light.xy)
-				{
-					var rgbColor = rgb.convertXYtoRGB(light.xy[0], light.xy[1], light.brightness);
-
-					message.payload.rgb = rgbColor;
-					message.payload.hex = rgbHex(rgbColor[0], rgbColor[1], rgbColor[2]);
-
-					if(config.colornamer == true)
-					{
-						var cNamesArray = colornamer(rgbHex(rgbColor[0], rgbColor[1], rgbColor[2]));
-						message.payload.color = cNamesArray.basic[0]["name"];
-					}
-				}
-
-				if(light.colorTemp)
-				{
-					message.payload.colorTemp = light.colorTemp;
-				}
-
-				message.payload.updated = moment().format();
-				scope.send(message);
-			});
+			bridge.events.on('light' + config.lightid, this.sendLightStatus);
 		}
 		else
 		{
@@ -271,8 +208,6 @@ module.exports = function(RED)
 		this.sendLightStatus = function(light)
 		{
 			var scope = this;
-			var brightnessPercent = 0;
-
 			if(light.on)
 			{
 				brightnessPercent = Math.round((100/254)*light.brightness);
@@ -287,7 +222,7 @@ module.exports = function(RED)
 			var message = {};
 			message.payload = {};
 			message.payload.on = light.on;
-			message.payload.brightness = brightnessPercent;
+			message.payload.brightness = light.brightness;
 
 			message.info = {};
 			message.info.id = light.id;
