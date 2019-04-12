@@ -60,7 +60,6 @@ module.exports = function(RED)
 				if (shouldChange) {
 					// modify scene
 
-					var setLightPromises = [];
 					if (typeof msg.change.lights != 'undefined') {
 						if (msg.change.modifyMembers === true) {
 							// modify scene members
@@ -71,15 +70,15 @@ module.exports = function(RED)
 							if (lightId in msg.change.lights) {
 								var light = scene.getLightState(lightId);
 
-								// we need to know the model to calculate light
-								setLightPromises.push(
-									bridge.client.lights.getById(lightId)
-										.then(bridgeLight => {
-											light.model = bridgeLight.model;
-											light = lightHelper.parseLight(msg.change.lights[lightId], light, scope);
-											scene.setLightState(lightId, light);
-										})
-								);
+								var data = msg.change.lights[lightId];
+								if (data.color !== undefined || data.hex !== undefined || data.rgb !== undefined)
+								{
+									node.error("Can't use color/hex/rgb when setting scene. Use xy instead");
+									return;
+								}
+
+								light = lightHelper.parseLight(data, light, scope);
+								scene.setLightState(lightId, light);
 							}
 						});
 					}
@@ -88,18 +87,20 @@ module.exports = function(RED)
 						scene.transitionTime = msg.change.transitionTime;
 					}
 
-					return Promise.all(setLightPromises).then(() => {
-						bridge.client.scenes.save(scene);
-						scope.status({ fill: "green", shape: "dot", text: "scene saved" });
-						return scene;
-					});
+					return bridge.client.scenes.save(scene);
 				}
 				else {
 					return scene;
 				}
 			})
 			.then(scene => {
-				if (shouldRecall) {
+				if (shouldChange)
+				{
+					scope.status({ fill: "green", shape: "dot", text: "scene saved" });
+				}
+
+				if (shouldRecall)
+				{
 					scope.status({ fill: "blue", shape: "dot", text: "scene recalled" });
 					bridge.client.scenes.recall(scene);
 				}
