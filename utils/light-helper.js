@@ -18,19 +18,15 @@ module.exports = {
 		// SET BRIGHTNESS
 		if(typeof data.brightness != 'undefined')
 		{
-			if(data.brightness > 100 || data.brightness < 0)
+			if(data.brightness >= 1 && data.brightness <= 254)
 			{
-				scope.error("Invalid brightness setting. Only 0 - 100 percent allowed");
-				return false;
-			}
-			else if(data.brightness == 0 && light.on !== undefined)
-			{
-				light.on = false;
+				light.on = true;
+				light.brightness = parseInt(data.brightness);
 			}
 			else
 			{
-				light.on = true;
-				light.brightness = Math.round((254/100)*parseInt(data.brightness));
+				scope.error("Invalid brightness setting. Only 1 - 254 allowed");
+				return false;
 			}
 		}
 		else if(typeof data.incrementBrightness != 'undefined')
@@ -39,63 +35,126 @@ module.exports = {
 			{
 				light.on = true;
 			}
-			light.incrementBrightness = Math.round((254/100)*parseInt(data.incrementBrightness));
+			light.incrementBrightness = parseInt(data.incrementBrightness);
 		}
 
-		// SET HUMAN READABLE COLOR
-		if(data.color && light.xy)
+		// SET COLOR MODE
+		var colorModes = [ "hs", "xy", "ct" ];
+
+		if (data.colorMode)
 		{
-			var colorHex = colornames(data.color);
-			if(colorHex)
+			var mode = data.colorMode.toString().toLowercase();
+			if (colorModes.includes(mode))
 			{
-				light.xy = rgb.convertRGBtoXY(hexRGB(colorHex), light.model.id);
-			}
-		}
-
-		// SET RGB COLOR
-		if(data.rgb && light.xy)
-		{
-			light.xy = rgb.convertRGBtoXY(data.rgb, light.model.id);
-		}
-
-		// SET HEX COLOR
-		if(data.hex && light.xy)
-		{
-			var rgbResult = hexRGB((data.hex).toString());
-			light.xy = rgb.convertRGBtoXY([rgbResult.red, rgbResult.green, rgbResult.blue], light.model.id);
-		}
-
-		// SET COLOR TEMPERATURE
-		if(data.colorTemp && light.colorTemp)
-		{
-			let colorTemp = parseInt(data.colorTemp);
-			if(colorTemp >= 153 && colorTemp <= 500)
-			{
-				light.colorTemp = parseInt(data.colorTemp);
+				light.colorMode = data.colorMode;
 			}
 			else
 			{
-				scope.error("Invalid color temprature. Only 153 - 500 allowed");
+				scope.error("Unknown color mode" + data.colorMode);
 				return false;
 			}
 		}
-
-		// SET SATURATION
-		if(data.saturation && light.saturation)
+		else
 		{
-			if(data.saturation > 100 || data.saturation < 0)
+			var modeSet = 0;
+			if (data.hue || data.saturation)
 			{
-				scope.error("Invalid saturation setting. Only 0 - 254 allowed");
-				return false;
+				light.colorMode = "hs";
+				modeSet = modeSet + 1;
 			}
-			else
+			if (data.colorTemp)
 			{
-				light.saturation = Math.round((254/100)*parseInt(data.saturation));
+				light.colorMode = "ct";
+				modeSet = modeSet + 1;
+			}
+			if (data.xy || data.color || data.hex)
+			{
+				light.colorMode = "xy";
+				modeSet = modeSet + 1;
+			}
+			if (modeSet > 1)
+				scope.warning("More than one way of setting color specified. Use colorMode to select (using default order xy>ct>hs)");
+		}
+
+		// manually set xy values
+		if (light.colorMode == "xy")
+		{
+			if (data.xy)
+			{
+				light.xy = data.xy;
+			}
+			else // conversion mode
+			{
+				// SET HUMAN READABLE COLOR
+				if (data.color)
+				{
+					var colorHex = colornames(data.color);
+					if (colorHex)
+					{
+						light.xy = rgb.convertRGBtoXY(hexRGB(colorHex), light.model.id);
+					}
+				}
+
+				// SET RGB COLOR
+				if (data.rgb)
+				{
+					light.xy = rgb.convertRGBtoXY(data.rgb, light.model.id);
+				}
+
+				// SET HEX COLOR
+				if (data.hex)
+				{
+					var rgbResult = hexRGB((data.hex).toString());
+					light.xy = rgb.convertRGBtoXY([rgbResult.red, rgbResult.green, rgbResult.blue], light.model.id);
+				}
+			}
+		}
+		else if (colorMode == "ct")
+		{
+			if(data.colorTemp)
+			{
+				let colorTemp = parseInt(data.colorTemp);
+				if(colorTemp >= 153 && colorTemp <= 500)
+				{
+					light.colorTemp = colorTemp;
+				}
+				else
+				{
+					scope.error("Invalid color temprature. Only 153 - 500 allowed");
+					return false;
+				}
+			}
+		else if (light.colorMode == "hs")
+		{
+			if (data.saturation)
+			{
+				if (data.saturation >= 0 && data.saturation >= 254)
+				{
+					light.saturation = parseInt(data.saturation);
+				}
+				else
+				{
+					scope.error("Invalid saturation setting. Only 0 - 254 allowed");
+					return false;
+				}
+			}
+
+			if (data.hue)
+			{
+				if (data.hue >= 0 && data.hue <= 65535)
+				{
+					light.hue = parseInt(data.hue);
+				}
+				else
+				{
+					scope.error("Invalid hue setting. Only 0 - 65535 allowed");
+					return false;
+				}
 			}
 		}
 
 		// SET TRANSITION TIME
-		if(data.transitionTime)
+		if (data.transitionTime)
 		{
 			light.transitionTime = parseInt(data.transitionTime);
 		}

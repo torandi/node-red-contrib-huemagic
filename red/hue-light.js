@@ -58,6 +58,7 @@ module.exports = function(RED)
 				message.payload.on = light.on;
 				message.payload.brightness = brightnessPercent;
 				message.payload.reachable = light.reachable;
+				message.payload.colorMode = light.colorMode;
 
 				message.info = {};
 				message.info.id = light.id;
@@ -307,6 +308,7 @@ module.exports = function(RED)
 			{
 				var rgbColor = rgb.convertXYtoRGB(light.xy[0], light.xy[1], light.brightness);
 
+				message.payload.xy = light.xy;
 				message.payload.rgb = rgbColor;
 				message.payload.hex = rgbHex(rgbColor[0], rgbColor[1], rgbColor[2]);
 
@@ -317,10 +319,17 @@ module.exports = function(RED)
 				}
 			}
 
-			if(light.colorTemp)
-			{
+			if (light.colorTemp)
 				message.payload.colorTemp = light.colorTemp;
-			}
+
+			if (light.saturation)
+				message.payload.saturation = light.saturation;
+
+			if (light.hue)
+				message.payload.hue = light.hue;
+
+			if (light.colorMode)
+				message.payload.colorMode = light.colorMode;
 
 			message.payload.updated = moment().format();
 
