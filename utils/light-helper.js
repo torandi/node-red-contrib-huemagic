@@ -111,10 +111,10 @@ module.exports = {
 		}
 		else if (colorMode == "ct")
 		{
-			if(data.colorTemp)
+			if (data.colorTemp)
 			{
 				let colorTemp = parseInt(data.colorTemp);
-				if(colorTemp >= 153 && colorTemp <= 500)
+				if (colorTemp >= 153 && colorTemp <= 500)
 				{
 					light.colorTemp = colorTemp;
 				}
@@ -124,6 +124,7 @@ module.exports = {
 					return false;
 				}
 			}
+		}
 		else if (light.colorMode == "hs")
 		{
 			if (data.saturation)
