@@ -29,17 +29,6 @@ module.exports = function(RED)
 		// UPDATE STATE
 		this.status({fill: "grey", shape: "dot", text: "initializing…"});
 		//
-		// ON UPDATE
-		if(config.lightid)
-		{
-			bridge.events.on('light' + config.lightid, function (light) {
-				scope.sendLightStatus(light);
-			});
-		}
-		else
-		{
-			scope.status({fill: "grey", shape: "dot", text: "universal mode"});
-		}
 
 
 		//
@@ -277,6 +266,17 @@ module.exports = function(RED)
 			scope.send(message);
 		}
 
+		// ON UPDATE
+		if(config.lightid)
+		{
+			bridge.events.on('light' + config.lightid, function (light) {
+				scope.sendLightStatus(light);
+			});
+		}
+		else
+		{
+			scope.status({fill: "grey", shape: "dot", text: "universal mode"});
+		}
 
 		//
 		// CLOSE NDOE / REMOVE RECHECK INTERVAL
