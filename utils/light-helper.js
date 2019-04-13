@@ -43,7 +43,7 @@ module.exports = {
 
 		if (data.colorMode)
 		{
-			var mode = data.colorMode.toString().toLowercase();
+			var mode = data.colorMode.toString().toLowerCase();
 			if (colorModes.includes(mode))
 			{
 				light.colorMode = data.colorMode;
