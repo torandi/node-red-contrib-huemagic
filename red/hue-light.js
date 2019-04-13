@@ -4,6 +4,32 @@ module.exports = function(RED)
 
 	function HueLight(config)
 	{
+		RED.nodes.createNode(this, config);
+
+		var scope = this;
+		let bridge = RED.nodes.getNode(config.bridge);
+		let moment = require('moment');
+		let lightHelper = require('../utils/light-helper.js');
+		let rgb = require('../utils/rgb');
+		let rgbHex = require('rgb-hex');
+		let hexRGB = require('hex-rgb');
+		let colornames = require("colornames");
+		let colornamer = require('color-namer');
+
+		
+		//
+		// CHECK CONFIG
+		if(bridge == null)
+		{
+			this.status({fill: "red", shape: "ring", text: "not configured"});
+			return false;
+		}
+
+		//
+		// UPDATE STATE
+		this.status({fill: "grey", shape: "dot", text: "initializing…"});
+
+		// Configure send light status function
 		this.sendLightStatus = function(light)
 		{
 			var scope = this;
@@ -68,31 +94,6 @@ module.exports = function(RED)
 
 			scope.send(message);
 		}
-
-		RED.nodes.createNode(this, config);
-
-		var scope = this;
-		let bridge = RED.nodes.getNode(config.bridge);
-		let moment = require('moment');
-		let lightHelper = require('../utils/light-helper.js');
-		let rgb = require('../utils/rgb');
-		let rgbHex = require('rgb-hex');
-		let hexRGB = require('hex-rgb');
-		let colornames = require("colornames");
-		let colornamer = require('color-namer');
-
-		
-		//
-		// CHECK CONFIG
-		if(bridge == null)
-		{
-			this.status({fill: "red", shape: "ring", text: "not configured"});
-			return false;
-		}
-
-		//
-		// UPDATE STATE
-		this.status({fill: "grey", shape: "dot", text: "initializing…"});
 
 		//
 		// ON UPDATE
