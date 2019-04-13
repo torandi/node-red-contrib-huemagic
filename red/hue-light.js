@@ -33,7 +33,7 @@ module.exports = function(RED)
 		if(config.lightid)
 		{
 			bridge.events.on('light' + config.lightid, function (light) {
-				this.sendLightStatus(light);
+				scope.sendLightStatus(light);
 			});
 		}
 		else
