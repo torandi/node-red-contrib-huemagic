@@ -40,13 +40,14 @@ module.exports = {
 
 		// SET COLOR MODE
 		var colorModes = [ "hs", "xy", "ct" ];
+		var colorMode = light.colorMode;
 
 		if (data.colorMode)
 		{
 			var mode = data.colorMode.toString().toLowerCase();
 			if (colorModes.includes(mode))
 			{
-				light.colorMode = mode;
+				colorMode = mode;
 			}
 			else
 			{
@@ -59,27 +60,27 @@ module.exports = {
 			var modeSet = 0;
 			if (data.hue || data.saturation)
 			{
-				light.colorMode = "hs";
+				colorMode = "hs";
 				modeSet = modeSet + 1;
 			}
 			if (data.colorTemp)
 			{
-				light.colorMode = "ct";
+				colorMode = "ct";
 				modeSet = modeSet + 1;
 			}
 			if (data.xy || data.color || data.hex)
 			{
-				light.colorMode = "xy";
+				colorMode = "xy";
 				modeSet = modeSet + 1;
 			}
 			if (modeSet > 1)
 				scope.warning("More than one way of setting color specified. Use colorMode to select (using default order xy>ct>hs)");
 		}
 
-		scope.log("Color mode " + light.colorMode);
+		scope.log("Color mode " + colorMode);
 
 		// manually set xy values
-		if (light.colorMode == "xy")
+		if (colorMode == "xy")
 		{
 			if (data.xy)
 			{
@@ -111,7 +112,7 @@ module.exports = {
 				}
 			}
 		}
-		else if (light.colorMode == "ct")
+		else if (colorMode == "ct")
 		{
 			if (data.colorTemp)
 			{
@@ -128,7 +129,7 @@ module.exports = {
 				}
 			}
 		}
-		else if (light.colorMode == "hs")
+		else if (colorMode == "hs")
 		{
 			if (data.saturation)
 			{
