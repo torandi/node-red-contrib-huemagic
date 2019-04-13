@@ -73,12 +73,19 @@ module.exports = function(RED)
 								var data = msg.change.lights[lightId];
 								if (data.color !== undefined || data.hex !== undefined || data.rgb !== undefined)
 								{
-									node.error("Can't use color/hex/rgb when setting scene. Use xy instead");
+									scope.error("Can't use color/hex/rgb when setting scene. Use xy instead");
 									return;
 								}
 
-								light = lightHelper.parseLight(data, light, scope);
-								scene.setLightState(lightId, light);
+								light = lightHelper.parseLight(data, light, scope, true);
+								if (light)
+								{
+									scene.setLightState(lightId, light);
+								}
+								else
+								{
+									scope.error("Failed to parse light");
+								}
 							}
 						});
 					}

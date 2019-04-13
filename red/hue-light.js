@@ -152,7 +152,7 @@ module.exports = function(RED)
 
 					if (msg.payload !== undefined)
 					{
-						light = lightHelper.parseLight(msg.payload, light, scope);
+						light = lightHelper.parseLight(msg.payload, light, scope, false);
 						if (light === false)
 						{
 							scope.error("Failed to parse light");

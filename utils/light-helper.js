@@ -2,7 +2,8 @@ module.exports = {
 	// @param data Light data to parse
 	// @param light Light to use as base (ie previous state of light)
 	// @param scope Node red scope
-	parseLight: function (data, light, scope) {
+	// @param cleanup unusued colors (needed for scenes, should not be done for lights)
+	parseLight: function (data, light, scope, cleanup) {
 		let rgb = require('../utils/rgb');
 		let rgbHex = require('rgb-hex');
 		let hexRGB = require('hex-rgb');
@@ -154,6 +155,25 @@ module.exports = {
 				}
 			}
 		}
+
+		if (cleanup)
+		{
+			// remove unusued color modes
+			if(colorMode != "xy")
+			{
+				light.xy = undefined;
+			}
+			if (colorMode != "ct")
+			{
+				light.colorTemp = undefined;
+			}
+			if (colorMode != "hs")
+			{
+				light.hue = undefined;
+				light.saturation = undefined;
+			}
+		}
+
 
 		// SET TRANSITION TIME
 		if (data.transitionTime)
