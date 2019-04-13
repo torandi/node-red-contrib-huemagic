@@ -46,7 +46,7 @@ module.exports = {
 			var mode = data.colorMode.toString().toLowerCase();
 			if (colorModes.includes(mode))
 			{
-				light.colorMode = data.colorMode;
+				light.colorMode = mode;
 			}
 			else
 			{
@@ -75,6 +75,8 @@ module.exports = {
 			if (modeSet > 1)
 				scope.warning("More than one way of setting color specified. Use colorMode to select (using default order xy>ct>hs)");
 		}
+
+		scope.log("Color mode " + light.colorMode);
 
 		// manually set xy values
 		if (light.colorMode == "xy")
@@ -117,10 +119,11 @@ module.exports = {
 				if (colorTemp >= 153 && colorTemp <= 500)
 				{
 					light.colorTemp = colorTemp;
+					scope.log("Set color temp to " + colorTemp);
 				}
 				else
 				{
-					scope.error("Invalid color temprature. Only 153 - 500 allowed");
+					scope.error("Invalid color temperature. Only 153 - 500 allowed");
 					return false;
 				}
 			}

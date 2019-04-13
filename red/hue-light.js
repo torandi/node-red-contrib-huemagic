@@ -4,6 +4,71 @@ module.exports = function(RED)
 
 	function HueLight(config)
 	{
+		this.sendLightStatus = function(light)
+		{
+			var scope = this;
+			if(light.on)
+			{
+				var brightnessPercent = Math.round((100/254)*light.brightness);
+				scope.status({fill: "yellow", shape: "dot", text: "turned on ("+ brightnessPercent +"%)"});
+			}
+			else
+			{
+				scope.status({fill: "grey", shape: "dot", text: "turned off"});
+			}
+
+			// DETERMINE TYPE AND SEND STATUS
+			var message = {};
+			message.payload = {};
+			message.payload.on = light.on;
+			message.payload.brightness = light.brightness;
+			message.payload.colorMode = light.colorMode;
+
+			message.info = {};
+			message.info.id = light.id;
+			message.info.uniqueId = light.uniqueId;
+			message.info.name = light.name;
+			message.info.type = light.type;
+			message.info.softwareVersion = light.softwareVersion;
+
+			message.info.model = {};;
+			message.info.model.id = light.model.id;
+			message.info.model.manufacturer = light.model.manufacturer;
+			message.info.model.name = light.model.name;
+			message.info.model.type = light.model.type;
+			message.info.model.colorGamut = light.model.colorGamut;
+			message.info.model.friendsOfHue = light.model.friendsOfHue;
+
+			if (light.colorMode == "xy")
+			{
+				var rgbColor = rgb.convertXYtoRGB(light.xy[0], light.xy[1], light.brightness);
+
+				message.payload.xy = light.xy;
+				message.payload.rgb = rgbColor;
+				message.payload.hex = rgbHex(rgbColor[0], rgbColor[1], rgbColor[2]);
+
+				if (config.colornamer == true)
+				{
+					var cNamesArray = colornamer(rgbHex(rgbColor[0], rgbColor[1], rgbColor[2]));
+					message.payload.color = cNamesArray.basic[0]["name"];
+				}
+			}
+			else if (light.colorMode == "ct")
+			{
+				message.payload.colorTemp = light.colorTemp;
+			}
+			else if (light.colorMode == "hs")
+			{
+				message.payload.saturation = light.saturation;
+				message.payload.hue = light.hue;
+			}
+
+
+			message.payload.updated = moment().format();
+
+			scope.send(message);
+		}
+
 		RED.nodes.createNode(this, config);
 
 		var scope = this;
@@ -165,6 +230,7 @@ module.exports = function(RED)
 						light = lightHelper.parseLight(msg.payload, light, scope);
 						if (light === false)
 						{
+							node.error("Failed to parse light");
 							return false;
 						}
 
@@ -210,73 +276,6 @@ module.exports = function(RED)
 			}
 		});
 
-
-		//
-		// SEND LIGHT STATUS
-		this.sendLightStatus = function(light)
-		{
-			var scope = this;
-			if(light.on)
-			{
-				var brightnessPercent = Math.round((100/254)*light.brightness);
-				scope.status({fill: "yellow", shape: "dot", text: "turned on ("+ brightnessPercent +"%)"});
-			}
-			else
-			{
-				scope.status({fill: "grey", shape: "dot", text: "turned off"});
-			}
-
-			// DETERMINE TYPE AND SEND STATUS
-			var message = {};
-			message.payload = {};
-			message.payload.on = light.on;
-			message.payload.brightness = light.brightness;
-			message.payload.colorMode = light.colorMode;
-
-			message.info = {};
-			message.info.id = light.id;
-			message.info.uniqueId = light.uniqueId;
-			message.info.name = light.name;
-			message.info.type = light.type;
-			message.info.softwareVersion = light.softwareVersion;
-
-			message.info.model = {};;
-			message.info.model.id = light.model.id;
-			message.info.model.manufacturer = light.model.manufacturer;
-			message.info.model.name = light.model.name;
-			message.info.model.type = light.model.type;
-			message.info.model.colorGamut = light.model.colorGamut;
-			message.info.model.friendsOfHue = light.model.friendsOfHue;
-
-			if (light.colorMode == "xy")
-			{
-				var rgbColor = rgb.convertXYtoRGB(light.xy[0], light.xy[1], light.brightness);
-
-				message.payload.xy = light.xy;
-				message.payload.rgb = rgbColor;
-				message.payload.hex = rgbHex(rgbColor[0], rgbColor[1], rgbColor[2]);
-
-				if (config.colornamer == true)
-				{
-					var cNamesArray = colornamer(rgbHex(rgbColor[0], rgbColor[1], rgbColor[2]));
-					message.payload.color = cNamesArray.basic[0]["name"];
-				}
-			}
-			else if (light.colorMode == "ct")
-			{
-				message.payload.colorTemp = light.colorTemp;
-			}
-			else if (light.colorMode == "hs")
-			{
-				message.payload.saturation = light.saturation;
-				message.payload.hue = light.hue;
-			}
-
-
-			message.payload.updated = moment().format();
-
-			scope.send(message);
-		}
 
 		//
 		// CLOSE NDOE / REMOVE RECHECK INTERVAL
