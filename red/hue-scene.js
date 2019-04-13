@@ -122,6 +122,7 @@ module.exports = function(RED)
 				}, 1000);
 			})
 			.catch(error => {
+				scope.error(JSON.stringify(error));
 				scope.error(error, msg);
 			});
 		});
