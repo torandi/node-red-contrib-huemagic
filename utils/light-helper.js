@@ -77,8 +77,6 @@ module.exports = {
 				scope.warning("More than one way of setting color specified. Use colorMode to select (using default order xy>ct>hs)");
 		}
 
-		scope.log("Color mode " + colorMode);
-
 		// manually set xy values
 		if (colorMode == "xy")
 		{
@@ -120,7 +118,6 @@ module.exports = {
 				if (colorTemp >= 153 && colorTemp <= 500)
 				{
 					light.colorTemp = colorTemp;
-					scope.log("Set color temp to " + colorTemp);
 				}
 				else
 				{

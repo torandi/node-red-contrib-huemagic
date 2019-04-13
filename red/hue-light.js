@@ -155,7 +155,7 @@ module.exports = function(RED)
 						light = lightHelper.parseLight(msg.payload, light, scope);
 						if (light === false)
 						{
-							node.error("Failed to parse light");
+							scope.error("Failed to parse light");
 							return false;
 						}
 
