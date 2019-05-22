@@ -28,79 +28,7 @@ module.exports = function(RED)
 		//
 		// UPDATE STATE
 		this.status({fill: "grey", shape: "dot", text: "initializing…"});
-
 		//
-		// ON UPDATE
-		if(config.lightid)
-		{
-			bridge.events.on('light' + config.lightid, function(light)
-			{
-				var brightnessPercent = 0;
-				if(light.reachable){
-					if(light.on)
-					{
-						brightnessPercent = Math.round((100/254)*light.brightness);
-						scope.status({fill: "yellow", shape: "dot", text: "turned on ("+ brightnessPercent +"%)"});
-					}
-					else
-					{
-						scope.status({fill: "grey", shape: "dot", text: "turned off"});
-					}
-				}
-				else
-				{
-					scope.status({fill: "red", shape: "ring", text: "not reachable"});
-				}
-
-				// DETERMINE TYPE AND SEND STATUS
-				var message = {};
-				message.payload = {};
-				message.payload.on = light.on;
-				message.payload.brightness = brightnessPercent;
-				message.payload.reachable = light.reachable;
-
-				message.info = {};
-				message.info.id = light.id;
-				message.info.uniqueId = light.uniqueId;
-				message.info.name = light.name;
-				message.info.type = light.type;
-				message.info.softwareVersion = light.softwareVersion;
-
-				message.info.model = {};;
-				message.info.model.id = light.model.id;
-				message.info.model.manufacturer = light.model.manufacturer;
-				message.info.model.name = light.model.name;
-				message.info.model.type = light.model.type;
-				message.info.model.colorGamut = light.model.colorGamut;
-				message.info.model.friendsOfHue = light.model.friendsOfHue;
-
-				if(light.xy)
-				{
-					var rgbColor = rgb.convertXYtoRGB(light.xy[0], light.xy[1], light.brightness);
-
-					message.payload.rgb = rgbColor;
-					message.payload.hex = rgbHex(rgbColor[0], rgbColor[1], rgbColor[2]);
-
-					if(config.colornamer == true)
-					{
-						var cNamesArray = colornamer(rgbHex(rgbColor[0], rgbColor[1], rgbColor[2]));
-						message.payload.color = cNamesArray.basic[0]["name"];
-					}
-				}
-
-				if(light.colorTemp)
-				{
-					message.payload.colorTemp = light.colorTemp;
-				}
-
-				message.payload.updated = moment().format();
-				scope.send(message);
-			});
-		}
-		else
-		{
-			scope.status({fill: "grey", shape: "dot", text: "universal mode"});
-		}
 
 
 		//
@@ -222,24 +150,33 @@ module.exports = function(RED)
 				bridge.client.lights.getById(tempLightID)
 				.then(light => {
 
-					light = lightHelper.parseLight(msg.payload, light, scope);
-					if (light === false) {
-						return false;
-					}
-
-					// SET COLORLOOP EFFECT
-					if(msg.payload.colorloop && msg.payload.colorloop > 0 && light.xy)
+					if (msg.payload !== undefined)
 					{
-						light.effect = 'colorloop';
+						light = lightHelper.parseLight(msg.payload, light, scope, false);
+						if (light === false)
+						{
+							scope.error("Failed to parse light");
+							return false;
+						}
 
-						// DISABLE AFTER
-						setTimeout(function() {
-							light.effect = 'none';
-							bridge.client.lights.save(light);
-						}, parseInt(msg.payload.colorloop)*1000);
+						// SET COLORLOOP EFFECT
+						if (msg.payload.colorloop && msg.payload.colorloop > 0 && light.xy)
+						{
+							light.effect = 'colorloop';
+
+							// DISABLE AFTER
+							setTimeout(function () {
+								light.effect = 'none';
+								bridge.client.lights.save(light);
+							}, parseInt(msg.payload.colorloop) * 1000);
+						}
+
+						return bridge.client.lights.save(light);
 					}
-
-					return bridge.client.lights.save(light);
+					else
+					{
+						return light;
+					}
 				})
 				.then(light => {
 					if(light != false)
@@ -264,17 +201,12 @@ module.exports = function(RED)
 			}
 		});
 
-
-		//
-		// SEND LIGHT STATUS
 		this.sendLightStatus = function(light)
 		{
 			var scope = this;
-			var brightnessPercent = 0;
-
 			if(light.on)
 			{
-				brightnessPercent = Math.round((100/254)*light.brightness);
+				var brightnessPercent = Math.round((100/254)*light.brightness);
 				scope.status({fill: "yellow", shape: "dot", text: "turned on ("+ brightnessPercent +"%)"});
 			}
 			else
@@ -286,7 +218,8 @@ module.exports = function(RED)
 			var message = {};
 			message.payload = {};
 			message.payload.on = light.on;
-			message.payload.brightness = brightnessPercent;
+			message.payload.brightness = light.brightness;
+			message.payload.colorMode = light.colorMode;
 
 			message.info = {};
 			message.info.id = light.id;
@@ -303,28 +236,46 @@ module.exports = function(RED)
 			message.info.model.colorGamut = light.model.colorGamut;
 			message.info.model.friendsOfHue = light.model.friendsOfHue;
 
-			if(light.xy)
+			if (light.colorMode == "xy")
 			{
 				var rgbColor = rgb.convertXYtoRGB(light.xy[0], light.xy[1], light.brightness);
 
+				message.payload.xy = light.xy;
 				message.payload.rgb = rgbColor;
 				message.payload.hex = rgbHex(rgbColor[0], rgbColor[1], rgbColor[2]);
 
-				if(config.colornamer == true)
+				if (config.colornamer == true)
 				{
 					var cNamesArray = colornamer(rgbHex(rgbColor[0], rgbColor[1], rgbColor[2]));
 					message.payload.color = cNamesArray.basic[0]["name"];
 				}
 			}
-
-			if(light.colorTemp)
+			else if (light.colorMode == "ct")
 			{
 				message.payload.colorTemp = light.colorTemp;
 			}
+			else if (light.colorMode == "hs")
+			{
+				message.payload.saturation = light.saturation;
+				message.payload.hue = light.hue;
+			}
+
 
 			message.payload.updated = moment().format();
 
 			scope.send(message);
+		}
+
+		// ON UPDATE
+		if(config.lightid)
+		{
+			bridge.events.on('light' + config.lightid, function (light) {
+				scope.sendLightStatus(light);
+			});
+		}
+		else
+		{
+			scope.status({fill: "grey", shape: "dot", text: "universal mode"});
 		}
 
 		//
